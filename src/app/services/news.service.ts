@@ -5,15 +5,23 @@ import { environment } from 'src/environments/environment';
 import { NewsResponse, Article, ArticlesByCategoryAndPage } from '../interfaces';
 
 import { map } from "rxjs/operators";
+import { storedArticlesByCategory } from '../data/mock-news';
 
-const apiKey = environment.apiKey;
+
+// const apiKey = environment.apiKey;
+const apiKey = '2f103852f1d1412e9cb2dbff2ae19092';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NewsService {
 
-  private ArticlesByCategoryAndPage: ArticlesByCategoryAndPage = {}
+  // Para conexion HTTP
+  // private ArticlesByCategoryAndPage: ArticlesByCategoryAndPage = {}
+
+  // Local
+  private ArticlesByCategoryAndPage: ArticlesByCategoryAndPage = storedArticlesByCategory;
+  
 
   private date:Date;
   private day:Number;
@@ -40,6 +48,11 @@ export class NewsService {
   }
 
   getTopHeadlinesByCategory( category: string, loadMore: boolean = false ):Observable<Article[]> {
+
+    // LOCAL
+    return of(this.ArticlesByCategoryAndPage[category].articles);
+
+
 
     if( loadMore ){
       return this.getArticlesByCategory(category);

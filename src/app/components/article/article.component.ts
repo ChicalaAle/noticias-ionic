@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Article } from 'src/app/interfaces';
 import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
-import { ActionSheetButton, ActionSheetController, Platform } from '@ionic/angular';
+import { ActionSheetButton, ActionSheetController, Platform, ToastController } from '@ionic/angular';
 import { SocialSharing } from '@awesome-cordova-plugins/social-sharing/ngx';
 import { StorageService } from 'src/app/services/storage.service';
 
@@ -20,7 +20,8 @@ export class ArticleComponent implements OnInit {
     private platform: Platform,
     private actionSheetController: ActionSheetController,
     private socialSharing: SocialSharing,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private toastController: ToastController
     ) { }
 
   ngOnInit() {}
@@ -58,10 +59,9 @@ export class ArticleComponent implements OnInit {
       icon: 'share-outline',
       handler: () => this.onShareArticle()
     }
+    normalBtns.unshift(shareBtn);
 
-    if(this.platform.is('capacitor')){
-      normalBtns.unshift(shareBtn);
-    }
+    
 
     const actionSheet = await this.actionSheetController.create({
       header: 'Opciones',
@@ -79,21 +79,57 @@ export class ArticleComponent implements OnInit {
 
   onShareArticle(){
 
-    const { title, source, url } = this.article;
+    const { title, source, url, description } = this.article;
 
-    this.socialSharing.share(
-      title,
-      source.name,
-      null,
-      url
-    );
+    if(this.platform.is('capacitor') || this.platform.is('cordova')){
+
+      this.socialSharing.share(
+        title,
+        source.name,
+        null,
+        url
+      );
+
+    } else {
+
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          text: description,
+          url: url,
+        })
+          .then(() => console.log('Se compartió correctamente.'))
+          .catch((error) => console.log('Error: ', error));
+      } else {
+        console.log('Funcionalidad no soportada');
+      }
+
+    }
+
+    
 
   }
 
-  onToggleFavoriteArticle(){
-    
-    this.storageService.saveRemoveArticle(this.article);
+  async onToggleFavoriteArticle(){
 
+
+    
+   const action = await this.storageService.saveRemoveArticle(this.article);
+
+   if(action == 'save'){
+    this.toast("Artículo guardado en Favoritos.", 2000);
+   } else {
+    this.toast("Artículo eliminado de Favoritos.", 2000);
+   }
+
+  }
+
+  async toast(message: string, duration: number) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: duration
+    });
+    toast.present();
   }
 
 }

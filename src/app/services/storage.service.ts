@@ -31,17 +31,25 @@ export class StorageService {
 
     const exists = this._localArticles.find( localArticle => localArticle.title === article.title );
 
+    let action: string = '';
+
     if( exists ){
 
       this._localArticles = this._localArticles.filter( localArticle => localArticle.title !== article.title );
+
+      action = 'unsave';
 
     } else {
       
       this._localArticles = [article, ...this._localArticles];
 
+      action = 'save';
+
     }
     
     this._storage.set('articles', this._localArticles);
+
+    return action;
 
   }
 
